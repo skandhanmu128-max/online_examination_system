@@ -1,0 +1,19 @@
+# Target Build Directory
+target/
+
+# Portable Maven Binaries
+maven/
+
+# Compiled Jar Files
+*.jar
+*.class
+
+# IDE & Editor Settings
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+
+# Logs
+*.log

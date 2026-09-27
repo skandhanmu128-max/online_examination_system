@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamiQ - Secure Online Examination Platform</title>
+    <!-- Google Fonts & Chart.js -->
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="brand">
+            <div class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+            <span>Exami<span class="text-gradient">Q</span></span>
+        </div>
+        <div class="nav-user" id="navUserSection" style="display: none;">
+            <span class="badge badge-primary" id="navRoleBadge">STUDENT</span>
+            <span style="font-weight: 600;" id="navUserName">User</span>
+            <button class="btn btn-secondary btn-sm" onclick="app.logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- 1. AUTH VIEW (LOGIN / REGISTER) -->
+        <div id="authView" class="view active">
+            <div class="glass-card auth-container">
+                <div class="auth-header">
+                    <h2>Welcome to <span class="text-gradient">ExamiQ</span></h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Secure Online Examination System</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="tabLogin" onclick="app.switchAuthTab('login')">Login</div>
+                    <div class="auth-tab" id="tabRegister" onclick="app.switchAuthTab('register')">Register</div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="app.handleLogin(event)">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-user"></i> Username</label>
+                        <input type="text" id="loginUsername" class="form-control" placeholder="Enter username (e.g. admin or student1)" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-key"></i> Password</label>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="Enter password (e.g. admin123 or pass123)" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        Login to Portal <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    
+                    <div style="margin-top: 20px; font-size: 0.8rem; color: var(--text-dim); text-align: center;">
+                        <p>💡 Demo Credentials:</p>
+                        <p>Student: <b>student1</b> / <b>pass123</b> | Admin: <b>admin</b> / <b>admin123</b></p>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" onsubmit="app.handleRegister(event)" style="display: none;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="regFullName" class="form-control" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="regEmail" class="form-control" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="regUsername" class="form-control" placeholder="johndoe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Role</label>
+                        <select id="regRole" class="form-control">
+                            <option value="ROLE_STUDENT">Student</option>
+                            <option value="ROLE_ADMIN">Administrator</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. STUDENT PORTAL VIEW -->
+        <div id="studentPortalView" class="view">
+            <div style="margin-bottom: 28px;">
+                <h2>Student Examination Portal</h2>
+                <p style="color: var(--text-muted);">Select an available examination to start or review your previous scorecard results.</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-file-signature"></i></div>
+                    <div class="stat-info">
+                        <h4>Available Exams</h4>
+                        <div class="stat-value" id="studentAvailCount">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--success); background: var(--success-bg);"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-info">
+                        <h4>Completed Exams</h4>
+                        <div class="stat-value" id="studentCompletedCount">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--warning); background: var(--warning-bg);"><i class="fa-solid fa-award"></i></div>
+                    <div class="stat-info">
+                        <h4>Average Score</h4>
+                        <div class="stat-value" id="studentAvgScore">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-clock-rotate-left"></i> Available Online Tests</h3>
+            <div id="availableExamsGrid" class="exam-grid">
+                <!-- Dynamically Populated -->
+            </div>
+
+            <h3 style="margin: 40px 0 16px 0;"><i class="fa-solid fa-receipt"></i> Your Examination History</h3>
+            <div class="glass-card table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Attempt ID</th>
+                            <th>Exam Title</th>
+                            <th>Subject</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentHistoryTable">
+                        <!-- Dynamically Populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. EXAM WORKSPACE VIEW (TIMER & ANTI-CHEAT ENGINE) -->
+        <div id="examWorkspaceView" class="view">
+            <div class="glass-card exam-header">
+                <div>
+                    <span class="badge badge-primary" id="examWorkspaceSubject">Subject</span>
+                    <h2 id="examWorkspaceTitle" style="margin-top: 4px;">Exam Title</h2>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="timer-box">
+                        <i class="fa-solid fa-stopwatch" style="color: #60a5fa; font-size: 1.2rem;"></i>
+                        <span id="examTimerClock" class="timer-clock">00:00</span>
+                    </div>
+
+                    <button class="btn btn-success" onclick="app.confirmSubmitExam()"><i class="fa-solid fa-paper-plane"></i> Submit Exam</button>
+                </div>
+            </div>
+
+            <div class="exam-layout">
+                <!-- Left: Question Card -->
+                <div class="glass-card question-card">
+                    <div class="question-header">
+                        <span class="badge badge-primary" id="qNumberBadge">Question 1 of 5</span>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);" id="qMarksBadge">Marks: 5.0</span>
+                    </div>
+
+                    <div class="question-text" id="qTextDisplay">Question text loading...</div>
+
+                    <div class="options-list" id="optionsContainer">
+                        <!-- Options populated dynamically -->
+                    </div>
+
+                    <div class="question-footer">
+                        <button class="btn btn-secondary" id="btnMarkReview" onclick="app.toggleMarkForReview()">
+                            <i class="fa-regular fa-bookmark"></i> Mark for Review
+                        </button>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" id="btnPrevQ" onclick="app.navigateQuestion(-1)"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn btn-primary" id="btnNextQ" onclick="app.navigateQuestion(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Question Palette -->
+                <div class="glass-card palette-card">
+                    <h4>Question Palette</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Quick Navigation</p>
+
+                    <div class="palette-grid" id="paletteGrid">
+                        <!-- Numbers grid -->
+                    </div>
+
+                    <div class="palette-legend">
+                        <div class="legend-item"><div class="legend-color" style="background: var(--success);"></div> Answered</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--warning);"></div> Marked for Review</div>
+                        <div class="legend-item"><div class="legend-color" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color);"></div> Unanswered</div>
+                        <div class="legend-item"><div class="legend-color" style="background: var(--primary);"></div> Current Question</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ATTEMPT RESULT VIEW -->
+        <div id="resultView" class="view">
+            <div class="glass-card result-hero">
+                <span class="badge" id="resultStatusBadge">PASSED</span>
+                <h1 style="margin-top: 12px;" id="resultExamTitle">Java SE 21 Certification</h1>
+                <p style="color: var(--text-muted);" id="resultStudentMeta">Candidate: Skandhan M U | Subject: Computer Science</p>
+
+                <div class="score-badge-large text-gradient" id="resultScoreDisplay">20.0 / 25.0</div>
+                <p style="font-size: 1.1rem; color: var(--text-muted);" id="resultPercentDisplay">80.0% Grade Score</p>
+
+                <div style="margin-top: 24px; display: flex; justify-content: center; gap: 16px;">
+                    <button class="btn btn-primary" onclick="app.downloadResultPdf()"><i class="fa-solid fa-file-pdf"></i> Download Official PDF Scorecard</button>
+                    <button class="btn btn-secondary" onclick="app.returnToDashboard()"><i class="fa-solid fa-house"></i> Return to Portal</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--success); background: var(--success-bg);"><i class="fa-solid fa-check"></i></div>
+                    <div class="stat-info">
+                        <h4>Correct Answers</h4>
+                        <div class="stat-value" id="resCorrectCount">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--danger); background: var(--danger-bg);"><i class="fa-solid fa-xmark"></i></div>
+                    <div class="stat-info">
+                        <h4>Incorrect Answers</h4>
+                        <div class="stat-value" id="resIncorrectCount">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-minus"></i></div>
+                    <div class="stat-info">
+                        <h4>Unattempted</h4>
+                        <div class="stat-value" id="resUnattemptedCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin: 32px 0 16px 0;">Detailed Answer Review</h3>
+            <div id="resultQuestionBreakdown">
+                <!-- Dynamically populated answer review cards -->
+            </div>
+        </div>
+
+        <!-- 5. ADMIN DASHBOARD VIEW -->
+        <div id="adminDashboardView" class="view">
+            <div style="margin-bottom: 28px;">
+                <h2>Administrator Control Center</h2>
+                <p style="color: var(--text-muted);">Manage exams, question banks, student candidates, and monitor real-time exam metrics.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <h4>Total Students</h4>
+                        <div class="stat-value" id="adminTotalStudents">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="stat-info">
+                        <h4>Total Exams</h4>
+                        <div class="stat-value" id="adminTotalExams">0</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--success); background: var(--success-bg);"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="stat-info">
+                        <h4>Pass Rate</h4>
+                        <div class="stat-value" id="adminPassRate">0%</div>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon" style="color: var(--accent); background: rgba(139, 92, 246, 0.15);"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div class="stat-info">
+                        <h4>Class Average</h4>
+                        <div class="stat-value" id="adminClassAvg">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart & Creator Section -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                <div class="glass-card" style="padding: 24px;">
+                    <h3><i class="fa-solid fa-chart-column"></i> Performance Metrics</h3>
+                    <div style="height: 260px; margin-top: 16px;">
+                        <canvas id="adminPerformanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 24px;">
+                    <h3><i class="fa-solid fa-plus-circle"></i> Create New Examination</h3>
+                    <form onsubmit="app.handleCreateExam(event)" style="margin-top: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" id="newExamTitle" class="form-control" placeholder="e.g. Python Fundamentals" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Subject</label>
+                                <input type="text" id="newExamSubject" class="form-control" placeholder="e.g. Data Science" required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>Duration (Minutes)</label>
+                                <input type="number" id="newExamDuration" class="form-control" value="15" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pass Marks</label>
+                                <input type="number" id="newExamPassMarks" class="form-control" value="10" min="1" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="newExamDesc" class="form-control" placeholder="Short description of exam scope...">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Create Exam Draft</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Exam Management Table -->
+            <h3 style="margin-bottom: 16px;"><i class="fa-solid fa-list-check"></i> Examination Catalog & Question Management</h3>
+            <div class="glass-card table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Subject</th>
+                            <th>Duration</th>
+                            <th>Questions</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminExamsTable">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Question Bank Modal -->
+    <div class="modal-overlay" id="questionModal">
+        <div class="glass-card modal-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 id="modalExamTitle">Manage Questions for Exam</h3>
+                <button class="btn btn-secondary btn-sm" onclick="app.closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Add Question Form -->
+            <form onsubmit="app.handleAddQuestion(event)" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                <h4>Add New Question</h4>
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Question Text</label>
+                    <textarea id="qInputText" class="form-control" rows="2" placeholder="Enter question description..." required></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Question Type</label>
+                        <select id="qInputType" class="form-control" onchange="app.handleQTypeChange()">
+                            <option value="SINGLE_CHOICE">Single Choice (MCQ)</option>
+                            <option value="TRUE_FALSE">True / False</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Marks</label>
+                        <input type="number" id="qInputMarks" class="form-control" value="5.0" step="0.5" required>
+                    </div>
+                </div>
+
+                <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 8px;">Options & Correct Answer</label>
+                <div id="modalOptionsList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                    <!-- Options Inputs -->
+                </div>
+
+                <div class="form-group">
+                    <label>Explanation</label>
+                    <input type="text" id="qInputExplanation" class="form-control" placeholder="Explanation shown to student after test completion...">
+                </div>
+
+                <button type="submit" class="btn btn-success" style="width: 100%;"><i class="fa-solid fa-plus"></i> Save Question to Bank</button>
+            </form>
+
+            <h4>Existing Questions</h4>
+            <div id="modalQuestionsList" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+                <!-- List of current questions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Anti-Cheat Warning Modal -->
+    <div class="modal-overlay" id="antiCheatModal">
+        <div class="glass-card modal-box" style="text-align: center; border-color: var(--danger);">
+            <div style="font-size: 3rem; color: var(--danger); margin-bottom: 12px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h2 style="color: var(--danger);">Security Violation Warning!</h2>
+            <p style="color: var(--text-muted); margin: 12px 0;">
+                You switched tabs or lost window focus during an active proctored examination.
+            </p>
+            <div class="badge badge-danger" style="font-size: 1.1rem; padding: 8px 16px;" id="antiCheatCountBadge">
+                Violation Warning 1 of 3
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 16px;">
+                ⚠️ Note: Reaching 3 violations will automatically trigger security flag and terminate your test attempt.
+            </p>
+            <button class="btn btn-danger" style="margin-top: 24px; width: 100%;" onclick="app.dismissAntiCheatModal()">
+                I Understand & Resume Test
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Application JS -->
+    <script src="/js/app.js"></script>
+</body>
+</html>
